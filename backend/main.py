@@ -42,7 +42,7 @@ app = FastAPI(title="ASL Fingerspelling API")
 # Tighten this to your actual deployed frontend domain before going to production.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://charan-0845.github.io"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
