@@ -1,4 +1,4 @@
-const BACKEND_WS_URL = "ws://localhost:8000/ws"; // change to your deployed backend URL later
+const BACKEND_WS_URL = "wss://notouchtyping.onrender.com/ws"; // change to your deployed backend URL later
 
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
