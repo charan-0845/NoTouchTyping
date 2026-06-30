@@ -181,7 +181,12 @@ function connectWebSocket() {
     typedTextEl.textContent = data.typed_text || "Typed text will appear here…";
     drawLandmarks(data.landmarks);
 
-    if (data.committed && audioEnabled) {
+    if (data.finished_word) {
+      statusEl.textContent = data.was_corrected
+        ? `Autocorrected to "${data.finished_word}"`
+        : `Word: "${data.finished_word}"`;
+      if (audioEnabled) speak(data.finished_word);
+    } else if (data.committed && audioEnabled) {
       // Speak "space" / "delete" by name; otherwise speak the letter itself
       const spoken = data.committed === "space" ? "space"
                     : data.committed === "del" ? "delete"
@@ -237,8 +242,10 @@ function sendLoop() {
 }
 
 clearBtn.onclick = () => {
-  // Simple local clear; for full sync you'd also tell the backend to reset typed_text
   typedTextEl.textContent = "Typed text will appear here…";
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send("__reset__");
+  }
 };
 
 audioBtn.onclick = () => {

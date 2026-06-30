@@ -6,3 +6,4 @@ numpy==1.26.4
 tensorflow==2.17.0
 websockets==13.0
 python-multipart==0.0.9
+pyspellchecker==0.8.1

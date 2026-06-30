@@ -23,11 +23,13 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from tensorflow.keras.models import load_model
 
+from autocorrect import correct_last_word
+
 # ---------------------------------------------------------------------------
 # CONFIG
 # ---------------------------------------------------------------------------
 MODEL_PATH = "asl_mlp_model.keras"
-LABELS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ") + [ "del", "space" ]
+LABELS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ") + [ "del","space" ]  # must match the order used during training
 CONFIDENCE_THRESHOLD = 0.6
 SMOOTHING_WINDOW = 8
 
@@ -105,6 +107,25 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data_url = await websocket.receive_text()
+
+            if data_url == "__reset__":
+                typed_text = ""
+                last_committed = None
+                recent_preds.clear()
+                await websocket.send_json(
+                    {
+                        "prediction": None,
+                        "confidence": 0.0,
+                        "stable_label": None,
+                        "committed": None,
+                        "typed_text": typed_text,
+                        "landmarks": None,
+                        "finished_word": None,
+                        "was_corrected": False,
+                    }
+                )
+                continue
+
             frame = decode_base64_image(data_url)
             if frame is None:
                 continue
@@ -133,13 +154,15 @@ async def websocket_endpoint(websocket: WebSocket):
             )
 
             committed_this_frame = None
+            finished_word = None
+            was_corrected = False
             if (
                 stable_label not in ("uncertain", "none", None)
                 and count >= int(SMOOTHING_WINDOW * 0.7)
                 and stable_label != last_committed
             ):
                 if stable_label == "space":
-                    typed_text += " "
+                    typed_text, finished_word, was_corrected = correct_last_word(typed_text)
                 elif stable_label == "del":
                     typed_text = typed_text[:-1]
                 else:
@@ -157,6 +180,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     "committed": committed_this_frame,
                     "typed_text": typed_text,
                     "landmarks": landmarks_out,
+                    "finished_word": finished_word,
+                    "was_corrected": was_corrected,
                 }
             )
 
