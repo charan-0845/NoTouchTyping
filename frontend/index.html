@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ASL Fingerspelling — Live Demo</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0f1115;
+    color: #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+  h1 { font-weight: 600; margin-bottom: 4px; }
+  p.subtitle { color: #888; margin-top: 0; margin-bottom: 24px; }
+  .video-wrap {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  }
+  video { display: block; width: 640px; max-width: 90vw; transform: scaleX(-1); }
+  #landmarkOverlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 640px;
+    max-width: 90vw;
+    transform: scaleX(-1); /* mirror to match the mirrored video */
+    pointer-events: none;
+  }
+  .overlay {
+    position: absolute;
+    top: 16px; left: 16px;
+    background: rgba(0,0,0,0.55);
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 22px;
+    font-weight: 600;
+  }
+  .conf { font-size: 14px; color: #9ad; font-weight: 400; }
+  .text-output {
+    margin-top: 24px;
+    width: 640px;
+    max-width: 90vw;
+    min-height: 60px;
+    background: #1a1d24;
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 26px;
+    letter-spacing: 1px;
+    word-break: break-word;
+  }
+  .status { margin-top: 12px; font-size: 13px; color: #777; }
+  button {
+    margin-top: 16px;
+    background: #2b2f3a;
+    color: #eee;
+    border: 1px solid #444;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  button:hover { background: #3a3f4c; }
+</style>
+</head>
+<body>
+
+  <h1>ASL Fingerspelling Recognition</h1>
+  <p class="subtitle">Live webcam demo · MediaPipe + MLP · served via FastAPI</p>
+
+  <div class="video-wrap">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="landmarkOverlay"></canvas>
+    <div class="overlay">
+      <span id="letter">…</span>
+      <span class="conf" id="conf"></span>
+    </div>
+  </div>
+
+  <div class="text-output" id="typedText">Typed text will appear here…</div>
+  <button id="clearBtn">Clear text</button>
+  <div class="status" id="status">Connecting…</div>
+
+  <!-- hidden canvas used to grab frames from the video -->
+  <canvas id="canvas" style="display:none;"></canvas>
+
+<script>
+const BACKEND_WS_URL = "ws://localhost:8000/ws"; // change to your deployed backend URL later
+const FRAME_INTERVAL_MS = 100; // faster now that model inference overhead is fixed
+
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const letterEl = document.getElementById("letter");
+const confEl = document.getElementById("conf");
+const typedTextEl = document.getElementById("typedText");
+const statusEl = document.getElementById("status");
+const clearBtn = document.getElementById("clearBtn");
+const landmarkCanvas = document.getElementById("landmarkOverlay");
+const landmarkCtx = landmarkCanvas.getContext("2d");
+
+// Standard MediaPipe Hands connections (pairs of landmark indices to draw lines between)
+const HAND_CONNECTIONS = [
+  [0,1],[1,2],[2,3],[3,4],          // thumb
+  [0,5],[5,6],[6,7],[7,8],          // index
+  [5,9],[9,10],[10,11],[11,12],     // middle
+  [9,13],[13,14],[14,15],[15,16],   // ring
+  [13,17],[17,18],[18,19],[19,20],  // pinky
+  [0,17]                            // palm base
+];
+
+function drawLandmarks(landmarks) {
+  landmarkCtx.clearRect(0, 0, landmarkCanvas.width, landmarkCanvas.height);
+  if (!landmarks) return;
+
+  const w = landmarkCanvas.width;
+  const h = landmarkCanvas.height;
+
+  // draw connections
+  landmarkCtx.strokeStyle = "#00FF88";
+  landmarkCtx.lineWidth = 2;
+  HAND_CONNECTIONS.forEach(([a, b]) => {
+    const p1 = landmarks[a], p2 = landmarks[b];
+    landmarkCtx.beginPath();
+    landmarkCtx.moveTo(p1.x * w, p1.y * h);
+    landmarkCtx.lineTo(p2.x * w, p2.y * h);
+    landmarkCtx.stroke();
+  });
+
+  // draw points
+  landmarkCtx.fillStyle = "#FF3366";
+  landmarks.forEach(p => {
+    landmarkCtx.beginPath();
+    landmarkCtx.arc(p.x * w, p.y * h, 4, 0, 2 * Math.PI);
+    landmarkCtx.fill();
+  });
+}
+
+let ws;
+let sending = false;
+
+async function startCamera() {
+  const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+  video.srcObject = stream;
+  return new Promise(resolve => { video.onloadedmetadata = () => resolve(); });
+}
+
+function connectWebSocket() {
+  ws = new WebSocket(BACKEND_WS_URL);
+
+  ws.onopen = () => {
+    statusEl.textContent = "Connected — show a hand sign to the camera";
+    startStreaming();
+  };
+
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.error) {
+      statusEl.textContent = "Backend error: " + data.error;
+      return;
+    }
+    letterEl.textContent = data.prediction ? data.prediction : "…";
+    confEl.textContent = data.confidence ? `(${(data.confidence * 100).toFixed(0)}%)` : "";
+    typedTextEl.textContent = data.typed_text || "Typed text will appear here…";
+    drawLandmarks(data.landmarks);
+    sending = true; // ready for next frame
+    sendLoop();
+  };
+
+  ws.onclose = () => {
+    statusEl.textContent = "Disconnected — retrying in 2s…";
+    setTimeout(connectWebSocket, 2000);
+  };
+
+  ws.onerror = () => {
+    statusEl.textContent = "Connection error";
+  };
+}
+
+function startStreaming() {
+  // Smaller frames = faster decode + faster MediaPipe processing = lower
+  // end-to-end latency. Backpressure means this directly translates to a
+  // higher effective tracking fps rather than just less queuing.
+  const scale = Math.min(1, 360 / (video.videoWidth || 640));
+  canvas.width = Math.round((video.videoWidth || 640) * scale);
+  canvas.height = Math.round((video.videoHeight || 480) * scale);
+
+  // The overlay canvas uses the same coordinate space as the video element's
+  // displayed size (CSS width/height), since landmarks are normalized 0-1.
+  landmarkCanvas.width = video.clientWidth;
+  landmarkCanvas.height = video.clientHeight;
+
+  sending = true;
+  sendLoop();
+}
+
+function sendLoop() {
+  if (ws.readyState !== WebSocket.OPEN) {
+    // retry shortly if socket isn't ready yet
+    setTimeout(sendLoop, 100);
+    return;
+  }
+  if (!sending) {
+    // waiting for the backend's response to the last frame before sending another
+    return;
+  }
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+  ws.send(dataUrl);
+  sending = false; // wait for response (set back to true in onmessage)
+}
+
+clearBtn.onclick = () => {
+  // Simple local clear; for full sync you'd also tell the backend to reset typed_text
+  typedTextEl.textContent = "Typed text will appear here…";
+};
+
+(async function init() {
+  await startCamera();
+  connectWebSocket();
+})();
+</script>
+</body>
+</html>

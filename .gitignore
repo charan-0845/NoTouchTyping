@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+env/
+.venv/
+*.egg-info/
+
+# Environment / secrets
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Model weights — uncomment if your model file is large (>50-100MB) and you
+# don't want it bloating the repo. If you do this, document in the README
+# how to obtain/regenerate the model, or host it separately (e.g. Git LFS,
+# a release asset, or cloud storage) and download it at deploy time.
+# backend/*.h5
+# backend/*.keras
+
+# Node (only relevant if you later add a JS build step / package.json)
+node_modules/
