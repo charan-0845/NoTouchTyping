@@ -53,8 +53,8 @@
     word-break: break-word;
   }
   .status { margin-top: 12px; font-size: 13px; color: #777; }
+  .button-row { display: flex; gap: 10px; margin-top: 16px; }
   button {
-    margin-top: 16px;
     background: #2b2f3a;
     color: #eee;
     border: 1px solid #444;
@@ -80,7 +80,10 @@
   </div>
 
   <div class="text-output" id="typedText">Typed text will appear here…</div>
-  <button id="clearBtn">Clear text</button>
+  <div class="button-row">
+    <button id="clearBtn">Clear text</button>
+    <button id="audioBtn">🔊 Audio: On</button>
+  </div>
   <div class="status" id="status">Connecting…</div>
 
   <!-- hidden canvas used to grab frames from the video -->
@@ -98,6 +101,8 @@ const confEl = document.getElementById("conf");
 const typedTextEl = document.getElementById("typedText");
 const statusEl = document.getElementById("status");
 const clearBtn = document.getElementById("clearBtn");
+const audioBtn = document.getElementById("audioBtn");
+let audioEnabled = true;
 const landmarkCanvas = document.getElementById("landmarkOverlay");
 const landmarkCtx = landmarkCanvas.getContext("2d");
 
@@ -141,6 +146,16 @@ function drawLandmarks(landmarks) {
 let ws;
 let sending = false;
 
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  // Cancel any in-progress utterance so rapid commits don't pile up/overlap
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 1.1;
+  utterance.volume = 1;
+  window.speechSynthesis.speak(utterance);
+}
+
 async function startCamera() {
   const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
   video.srcObject = stream;
@@ -165,6 +180,15 @@ function connectWebSocket() {
     confEl.textContent = data.confidence ? `(${(data.confidence * 100).toFixed(0)}%)` : "";
     typedTextEl.textContent = data.typed_text || "Typed text will appear here…";
     drawLandmarks(data.landmarks);
+
+    if (data.committed && audioEnabled) {
+      // Speak "space" / "delete" by name; otherwise speak the letter itself
+      const spoken = data.committed === "space" ? "space"
+                    : data.committed === "del" ? "delete"
+                    : data.committed;
+      speak(spoken);
+    }
+
     sending = true; // ready for next frame
     sendLoop();
   };
@@ -215,6 +239,12 @@ function sendLoop() {
 clearBtn.onclick = () => {
   // Simple local clear; for full sync you'd also tell the backend to reset typed_text
   typedTextEl.textContent = "Typed text will appear here…";
+};
+
+audioBtn.onclick = () => {
+  audioEnabled = !audioEnabled;
+  audioBtn.textContent = audioEnabled ? "🔊 Audio: On" : "🔇 Audio: Off";
+  if (!audioEnabled) window.speechSynthesis.cancel();
 };
 
 (async function init() {
