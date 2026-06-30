@@ -148,7 +148,7 @@ The model converges quickly, reaching ~98% validation accuracy within the first 
 
 ## License
 
-*(Add your license here, e.g. MIT)*
+MIT License 
 
 ---
 
