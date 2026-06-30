@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>App — NoTouchTyping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3D7FFF" stroke-width="2"><path d="M9 11.5V6a2 2 0 1 1 4 0v4M13 10V4a2 2 0 1 1 4 0v7M17 10.5V8a2 2 0 1 1 4 0v6a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.4L4.7 13a1.7 1.7 0 0 1 2.8-1.9L9 13"/></svg>
+      </span>
+      NoTouchTyping
+    </a>
+    <button class="nav-toggle" aria-label="Toggle navigation">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="app.html">App</a></li>
+      <li><a href="reference.html">Sign Reference</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page-header shell">
+  <span class="eyebrow">Live demo</span>
+  <h1>Sign to text</h1>
+  <p class="subtitle">Allow camera access, then fingerspell a letter and hold it steady — predictions stabilize automatically before being typed.</p>
+</div>
+
+<section class="section">
+  <div class="shell">
+    <div class="app-layout">
+
+      <!-- Video + landmark overlay -->
+      <div>
+        <div class="video-wrap">
+          <video id="video" autoplay playsinline muted></video>
+          <canvas id="landmarkOverlay"></canvas>
+          <div class="letter-badge">
+            <span class="letter" id="letter">…</span>
+            <span class="conf" id="conf"></span>
+          </div>
+        </div>
+        <div class="status-line">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="status">Connecting…</span>
+        </div>
+      </div>
+
+      <!-- Controls + output -->
+      <div>
+        <div class="card">
+          <div class="panel-title">Typed output</div>
+          <div class="typed-output empty" id="typedText">Typed text will appear here…</div>
+
+          <div class="control-row">
+            <button id="clearBtn" class="btn btn-secondary">Clear text</button>
+            <button id="audioBtn" class="btn btn-secondary">🔊 Audio: On</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 18px;">
+          <div class="panel-title">Tips</div>
+          <p style="font-size: 14px; margin-bottom: 10px;">Hold each sign steady for about a second — the system waits for a stable prediction before committing a letter.</p>
+          <p style="font-size: 14px; margin-bottom: 10px;">Good, even lighting on your hand improves tracking accuracy noticeably.</p>
+          <p style="font-size: 14px; margin: 0;">Completed words are spell-checked automatically and spoken aloud.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- hidden canvas used to grab frames from the video -->
+<canvas id="canvas" style="display:none;"></canvas>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <small>© 2026 NoTouchTyping. Built with MediaPipe, TensorFlow, and FastAPI.</small>
+    <div class="footer-links">
+      <a href="about.html">About</a>
+      <a href="reference.html">Sign Reference</a>
+      <a href="index.html">Home</a>
+    </div>
+  </div>
+</footer>
+
+<script src="nav.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

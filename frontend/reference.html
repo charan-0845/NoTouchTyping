@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sign Reference — NoTouchTyping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3D7FFF" stroke-width="2"><path d="M9 11.5V6a2 2 0 1 1 4 0v4M13 10V4a2 2 0 1 1 4 0v7M17 10.5V8a2 2 0 1 1 4 0v6a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.4L4.7 13a1.7 1.7 0 0 1 2.8-1.9L9 13"/></svg>
+      </span>
+      NoTouchTyping
+    </a>
+    <button class="nav-toggle" aria-label="Toggle navigation">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="app.html">App</a></li>
+      <li><a href="reference.html">Sign Reference</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page-header shell">
+  <span class="eyebrow">Reference</span>
+  <h1>Hand sign gallery</h1>
+  <p class="subtitle">Every sign the model recognizes — 26 letters plus space and delete. Click a tile to view the reference photo.</p>
+</div>
+
+<section class="section">
+  <div class="shell">
+    <div class="gallery-toggle-row">
+      <p style="margin: 0; font-size: 14px;" id="galleryHint">Gallery is hidden by default — click below to show it.</p>
+      <button class="btn btn-primary" id="galleryToggle">Show gallery</button>
+    </div>
+
+    <div class="sign-grid" id="signGrid" style="display: none;"></div>
+  </div>
+</section>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose">✕</button>
+  <div class="lightbox-card">
+    <div class="lightbox-letter" id="lightboxLetter">A</div>
+    <img id="lightboxImg" src="" alt="" />
+    <div class="lightbox-missing" id="lightboxMissing" style="display:none;">
+      No reference photo found yet for this sign. Add it to <code>assets/signs/</code>.
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <small>© 2026 NoTouchTyping. Built with MediaPipe, TensorFlow, and FastAPI.</small>
+    <div class="footer-links">
+      <a href="about.html">About</a>
+      <a href="app.html">App</a>
+      <a href="index.html">Home</a>
+    </div>
+  </div>
+</footer>
+
+<script src="nav.js"></script>
+<script>
+const SIGNS = [...Array(26)].map((_, i) => String.fromCharCode(65 + i)).concat(["space", "del"]);
+
+const signGrid = document.getElementById("signGrid");
+const galleryToggle = document.getElementById("galleryToggle");
+const galleryHint = document.getElementById("galleryHint");
+
+let galleryVisible = false;
+
+SIGNS.forEach(sign => {
+  const tile = document.createElement("div");
+  tile.className = "sign-tile";
+  tile.dataset.sign = sign;
+
+  const label = sign === "space" ? "SP" : sign === "del" ? "DEL" : sign;
+  tile.innerHTML = `<span>${label}</span>`;
+  tile.addEventListener("click", () => openLightbox(sign));
+  signGrid.appendChild(tile);
+});
+
+galleryToggle.addEventListener("click", () => {
+  galleryVisible = !galleryVisible;
+  signGrid.style.display = galleryVisible ? "grid" : "none";
+  galleryToggle.textContent = galleryVisible ? "Hide gallery" : "Show gallery";
+  galleryHint.textContent = galleryVisible
+    ? `Showing all ${SIGNS.length} signs — click any tile to view its photo.`
+    : "Gallery is hidden by default — click below to show it.";
+});
+
+const lightbox = document.getElementById("lightbox");
+const lightboxImg = document.getElementById("lightboxImg");
+const lightboxLetter = document.getElementById("lightboxLetter");
+const lightboxMissing = document.getElementById("lightboxMissing");
+const lightboxClose = document.getElementById("lightboxClose");
+
+function openLightbox(sign) {
+  const displayLabel = sign === "space" ? "SPACE" : sign === "del" ? "DELETE" : sign;
+  lightboxLetter.textContent = displayLabel;
+
+  const path = `assets/signs/${sign}1.jpg`;
+  lightboxImg.src = path;
+  lightboxImg.style.display = "block";
+  lightboxMissing.style.display = "none";
+
+  lightboxImg.onerror = () => {
+    lightboxImg.style.display = "none";
+    lightboxMissing.style.display = "block";
+  };
+
+  lightbox.classList.add("open");
+}
+
+lightboxClose.addEventListener("click", () => lightbox.classList.remove("open"));
+lightbox.addEventListener("click", (e) => {
+  if (e.target === lightbox) lightbox.classList.remove("open");
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") lightbox.classList.remove("open");
+});
+</script>
+</body>
+</html>

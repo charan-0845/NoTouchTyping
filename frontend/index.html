@@ -2,262 +2,164 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>ASL Fingerspelling — Live Demo</title>
-<style>
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #0f1115;
-    color: #eee;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 40px 20px;
-  }
-  h1 { font-weight: 600; margin-bottom: 4px; }
-  p.subtitle { color: #888; margin-top: 0; margin-bottom: 24px; }
-  .video-wrap {
-    position: relative;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-  }
-  video { display: block; width: 640px; max-width: 90vw; transform: scaleX(-1); }
-  #landmarkOverlay {
-    position: absolute;
-    top: 0; left: 0;
-    width: 640px;
-    max-width: 90vw;
-    transform: scaleX(-1); /* mirror to match the mirrored video */
-    pointer-events: none;
-  }
-  .overlay {
-    position: absolute;
-    top: 16px; left: 16px;
-    background: rgba(0,0,0,0.55);
-    padding: 10px 16px;
-    border-radius: 10px;
-    font-size: 22px;
-    font-weight: 600;
-  }
-  .conf { font-size: 14px; color: #9ad; font-weight: 400; }
-  .text-output {
-    margin-top: 24px;
-    width: 640px;
-    max-width: 90vw;
-    min-height: 60px;
-    background: #1a1d24;
-    border-radius: 12px;
-    padding: 16px 20px;
-    font-size: 26px;
-    letter-spacing: 1px;
-    word-break: break-word;
-  }
-  .status { margin-top: 12px; font-size: 13px; color: #777; }
-  .button-row { display: flex; gap: 10px; margin-top: 16px; }
-  button {
-    background: #2b2f3a;
-    color: #eee;
-    border: 1px solid #444;
-    padding: 8px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  button:hover { background: #3a3f4c; }
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NoTouchTyping — Type with sign language</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <h1>ASL Fingerspelling Recognition</h1>
-  <p class="subtitle">Live webcam demo · MediaPipe + MLP · served via FastAPI</p>
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3D7FFF" stroke-width="2"><path d="M9 11.5V6a2 2 0 1 1 4 0v4M13 10V4a2 2 0 1 1 4 0v7M17 10.5V8a2 2 0 1 1 4 0v6a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.4L4.7 13a1.7 1.7 0 0 1 2.8-1.9L9 13"/></svg>
+      </span>
+      NoTouchTyping
+    </a>
+    <button class="nav-toggle" aria-label="Toggle navigation">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="app.html">App</a></li>
+      <li><a href="reference.html">Sign Reference</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+  </div>
+</nav>
 
-  <div class="video-wrap">
-    <video id="video" autoplay playsinline muted></video>
-    <canvas id="landmarkOverlay"></canvas>
-    <div class="overlay">
-      <span id="letter">…</span>
-      <span class="conf" id="conf"></span>
+<header class="hero">
+  <div class="shell" style="position: relative;">
+    <svg class="hero-skeleton" viewBox="0 0 200 200" fill="none">
+      <g stroke="#3D7FFF" stroke-width="1.4" stroke-linecap="round">
+        <line x1="100" y1="170" x2="100" y2="120"/>
+        <line x1="100" y1="120" x2="80" y2="60"/>
+        <line x1="80" y1="60" x2="75" y2="30"/>
+        <line x1="75" y1="30" x2="72" y2="10"/>
+        <line x1="100" y1="120" x2="95" y2="50"/>
+        <line x1="95" y1="50" x2="93" y2="15"/>
+        <line x1="100" y1="120" x2="112" y2="48"/>
+        <line x1="112" y1="48" x2="115" y2="12"/>
+        <line x1="100" y1="120" x2="128" y2="55"/>
+        <line x1="128" y1="55" x2="135" y2="22"/>
+        <line x1="100" y1="120" x2="140" y2="75"/>
+        <line x1="140" y1="75" x2="150" y2="45"/>
+        <line x1="80" y1="60" x2="100" y2="120"/>
+      </g>
+      <g fill="#3D7FFF">
+        <circle cx="100" cy="170" r="3.5"/>
+        <circle cx="100" cy="120" r="3"/>
+        <circle cx="80" cy="60" r="2.6"/>
+        <circle cx="75" cy="30" r="2.4"/>
+        <circle cx="72" cy="10" r="2.4"/>
+        <circle cx="95" cy="50" r="2.6"/>
+        <circle cx="93" cy="15" r="2.4"/>
+        <circle cx="112" cy="48" r="2.6"/>
+        <circle cx="115" cy="12" r="2.4"/>
+        <circle cx="128" cy="55" r="2.6"/>
+        <circle cx="135" cy="22" r="2.4"/>
+        <circle cx="140" cy="75" r="2.6"/>
+        <circle cx="150" cy="45" r="2.4"/>
+      </g>
+    </svg>
+
+    <div class="hero-content">
+      <span class="eyebrow">Real-time ASL fingerspelling</span>
+      <h1>Type without touching a keyboard.</h1>
+      <p class="lede">
+        NoTouchTyping reads American Sign Language fingerspelling from your
+        webcam in real time, turning hand shapes into letters, words, and
+        sentences — no gloves, no sensors, just a camera and a trained model.
+      </p>
+      <div class="hero-actions">
+        <a href="app.html" class="btn btn-primary">Try the live demo →</a>
+        <a href="reference.html" class="btn btn-secondary">View sign reference</a>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat">
+          <span class="stat-value">28</span>
+          <span class="stat-label">Classes (A–Z + space + del)</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">21</span>
+          <span class="stat-label">Tracked hand landmarks</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">~10</span>
+          <span class="stat-label">FPS, browser to browser</span>
+        </div>
+      </div>
     </div>
   </div>
+</header>
 
-  <div class="text-output" id="typedText">Typed text will appear here…</div>
-  <div class="button-row">
-    <button id="clearBtn">Clear text</button>
-    <button id="audioBtn">🔊 Audio: On</button>
+<section class="section">
+  <div class="shell">
+    <span class="eyebrow">How it works</span>
+    <h2 style="font-size: 26px; margin-bottom: 28px;">From hand shape to typed letter</h2>
+
+    <div class="step">
+      <div class="step-index">01</div>
+      <div class="step-body">
+        <h3>Capture</h3>
+        <p>Your browser streams webcam frames over a WebSocket to a FastAPI backend — lightweight enough to run several times a second.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-index">02</div>
+      <div class="step-body">
+        <h3>Track</h3>
+        <p>MediaPipe Hands locates 21 landmark points on your hand per frame — fingertips, knuckles, and wrist — regardless of background or lighting.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-index">03</div>
+      <div class="step-body">
+        <h3>Normalize</h3>
+        <p>Landmark coordinates are made translation- and scale-invariant, so the same sign is recognized whether your hand is close, far, or off-center.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-index">04</div>
+      <div class="step-body">
+        <h3>Classify</h3>
+        <p>A trained multilayer perceptron (MLP) maps the 63-value landmark vector to one of 28 classes: 26 letters, space, and delete.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-index">05</div>
+      <div class="step-body">
+        <h3>Stabilize &amp; type</h3>
+        <p>Predictions are smoothed across frames to avoid flicker, then committed letter-by-letter into typed text — with autocorrect and audio feedback on completed words.</p>
+      </div>
+    </div>
   </div>
-  <div class="status" id="status">Connecting…</div>
+</section>
 
-  <!-- hidden canvas used to grab frames from the video -->
-  <canvas id="canvas" style="display:none;"></canvas>
+<section class="section tight">
+  <div class="shell">
+    <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <h3 style="margin-bottom: 4px;">Ready to try it?</h3>
+        <p style="margin: 0;">Works directly in your browser — just allow camera access.</p>
+      </div>
+      <a href="app.html" class="btn btn-primary">Open the app →</a>
+    </div>
+  </div>
+</section>
 
-<script>
-const BACKEND_WS_URL = "ws://localhost:8000/ws"; // change to your deployed backend URL later
-const FRAME_INTERVAL_MS = 100; // faster now that model inference overhead is fixed
+<footer class="footer">
+  <div class="footer-inner">
+    <small>© 2026 NoTouchTyping. Built with MediaPipe, TensorFlow, and FastAPI.</small>
+    <div class="footer-links">
+      <a href="about.html">About</a>
+      <a href="reference.html">Sign Reference</a>
+      <a href="app.html">App</a>
+    </div>
+  </div>
+</footer>
 
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-const letterEl = document.getElementById("letter");
-const confEl = document.getElementById("conf");
-const typedTextEl = document.getElementById("typedText");
-const statusEl = document.getElementById("status");
-const clearBtn = document.getElementById("clearBtn");
-const audioBtn = document.getElementById("audioBtn");
-let audioEnabled = true;
-const landmarkCanvas = document.getElementById("landmarkOverlay");
-const landmarkCtx = landmarkCanvas.getContext("2d");
-
-// Standard MediaPipe Hands connections (pairs of landmark indices to draw lines between)
-const HAND_CONNECTIONS = [
-  [0,1],[1,2],[2,3],[3,4],          // thumb
-  [0,5],[5,6],[6,7],[7,8],          // index
-  [5,9],[9,10],[10,11],[11,12],     // middle
-  [9,13],[13,14],[14,15],[15,16],   // ring
-  [13,17],[17,18],[18,19],[19,20],  // pinky
-  [0,17]                            // palm base
-];
-
-function drawLandmarks(landmarks) {
-  landmarkCtx.clearRect(0, 0, landmarkCanvas.width, landmarkCanvas.height);
-  if (!landmarks) return;
-
-  const w = landmarkCanvas.width;
-  const h = landmarkCanvas.height;
-
-  // draw connections
-  landmarkCtx.strokeStyle = "#00FF88";
-  landmarkCtx.lineWidth = 2;
-  HAND_CONNECTIONS.forEach(([a, b]) => {
-    const p1 = landmarks[a], p2 = landmarks[b];
-    landmarkCtx.beginPath();
-    landmarkCtx.moveTo(p1.x * w, p1.y * h);
-    landmarkCtx.lineTo(p2.x * w, p2.y * h);
-    landmarkCtx.stroke();
-  });
-
-  // draw points
-  landmarkCtx.fillStyle = "#FF3366";
-  landmarks.forEach(p => {
-    landmarkCtx.beginPath();
-    landmarkCtx.arc(p.x * w, p.y * h, 4, 0, 2 * Math.PI);
-    landmarkCtx.fill();
-  });
-}
-
-let ws;
-let sending = false;
-
-function speak(text) {
-  if (!('speechSynthesis' in window)) return;
-  // Cancel any in-progress utterance so rapid commits don't pile up/overlap
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 1.1;
-  utterance.volume = 1;
-  window.speechSynthesis.speak(utterance);
-}
-
-async function startCamera() {
-  const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
-  video.srcObject = stream;
-  return new Promise(resolve => { video.onloadedmetadata = () => resolve(); });
-}
-
-function connectWebSocket() {
-  ws = new WebSocket(BACKEND_WS_URL);
-
-  ws.onopen = () => {
-    statusEl.textContent = "Connected — show a hand sign to the camera";
-    startStreaming();
-  };
-
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    if (data.error) {
-      statusEl.textContent = "Backend error: " + data.error;
-      return;
-    }
-    letterEl.textContent = data.prediction ? data.prediction : "…";
-    confEl.textContent = data.confidence ? `(${(data.confidence * 100).toFixed(0)}%)` : "";
-    typedTextEl.textContent = data.typed_text || "Typed text will appear here…";
-    drawLandmarks(data.landmarks);
-
-    if (data.finished_word) {
-      statusEl.textContent = data.was_corrected
-        ? `Autocorrected to "${data.finished_word}"`
-        : `Word: "${data.finished_word}"`;
-      if (audioEnabled) speak(data.finished_word);
-    } else if (data.committed && audioEnabled) {
-      // Speak "space" / "delete" by name; otherwise speak the letter itself
-      const spoken = data.committed === "space" ? "space"
-                    : data.committed === "del" ? "delete"
-                    : data.committed;
-      speak(spoken);
-    }
-
-    sending = true; // ready for next frame
-    sendLoop();
-  };
-
-  ws.onclose = () => {
-    statusEl.textContent = "Disconnected — retrying in 2s…";
-    setTimeout(connectWebSocket, 2000);
-  };
-
-  ws.onerror = () => {
-    statusEl.textContent = "Connection error";
-  };
-}
-
-function startStreaming() {
-  // Smaller frames = faster decode + faster MediaPipe processing = lower
-  // end-to-end latency. Backpressure means this directly translates to a
-  // higher effective tracking fps rather than just less queuing.
-  const scale = Math.min(1, 360 / (video.videoWidth || 640));
-  canvas.width = Math.round((video.videoWidth || 640) * scale);
-  canvas.height = Math.round((video.videoHeight || 480) * scale);
-
-  // The overlay canvas uses the same coordinate space as the video element's
-  // displayed size (CSS width/height), since landmarks are normalized 0-1.
-  landmarkCanvas.width = video.clientWidth;
-  landmarkCanvas.height = video.clientHeight;
-
-  sending = true;
-  sendLoop();
-}
-
-function sendLoop() {
-  if (ws.readyState !== WebSocket.OPEN) {
-    // retry shortly if socket isn't ready yet
-    setTimeout(sendLoop, 100);
-    return;
-  }
-  if (!sending) {
-    // waiting for the backend's response to the last frame before sending another
-    return;
-  }
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-  ws.send(dataUrl);
-  sending = false; // wait for response (set back to true in onmessage)
-}
-
-clearBtn.onclick = () => {
-  typedTextEl.textContent = "Typed text will appear here…";
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send("__reset__");
-  }
-};
-
-audioBtn.onclick = () => {
-  audioEnabled = !audioEnabled;
-  audioBtn.textContent = audioEnabled ? "🔊 Audio: On" : "🔇 Audio: Off";
-  if (!audioEnabled) window.speechSynthesis.cancel();
-};
-
-(async function init() {
-  await startCamera();
-  connectWebSocket();
-})();
-</script>
+<script src="nav.js"></script>
 </body>
 </html>
